@@ -2,11 +2,11 @@
   "name": "expense-tracker-backend",
   "version": "1.0.0",
   "description": "Expense tracker backend server with Neon database",
-  "main": "server.js",
+  "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon server.js",
-    "dev": "nodemon --watch server.js"
+    "start": "node src/server.js",
+    "dev": "nodemon --watch src/server.js"
   },
   "keywords": [
     "expense tracker",
