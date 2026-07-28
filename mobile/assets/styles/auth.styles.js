@@ -1,6 +1,6 @@
 // styles/auth.styles.js
 import { StyleSheet } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { COLORS } from "@/constants/colors";
 
 export const styles = StyleSheet.create({
   container: {
@@ -9,11 +9,14 @@ export const styles = StyleSheet.create({
     padding: 20,
     justifyContent: "center",
   },
+
   illustration: {
     height: 310,
     width: 300,
     resizeMode: "contain",
+    alignSelf: "center",
   },
+
   title: {
     fontSize: 32,
     fontWeight: "bold",
@@ -21,6 +24,14 @@ export const styles = StyleSheet.create({
     marginVertical: 15,
     textAlign: "center",
   },
+
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.text,
+    marginBottom: 6,
+  },
+
   input: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
@@ -31,51 +42,7 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.text,
   },
-  errorInput: {
-    borderColor: COLORS.expense,
-  },
-  button: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  buttonText: {
-    color: COLORS.white,
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  footerContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-  },
-  footerText: {
-    color: COLORS.text,
-    fontSize: 16,
-  },
-  linkText: {
-    color: COLORS.primary,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  verificationContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    padding: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  verificationTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.text,
-    marginBottom: 20,
-    textAlign: "center",
-  },
+
   verificationInput: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
@@ -90,7 +57,94 @@ export const styles = StyleSheet.create({
     letterSpacing: 2,
   },
 
-  // 🔴 Error styles
+  errorInput: {
+    borderColor: COLORS.expense,
+  },
+
+  button: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+    marginBottom: 16,
+  },
+
+  buttonPressed: {
+    opacity: 0.85,
+  },
+
+  buttonDisabled: {
+    opacity: 0.55,
+  },
+
+  buttonText: {
+    color: COLORS.white,
+    fontSize: 18,
+    fontWeight: "600",
+  },
+
+  secondaryButtonRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  secondaryButton: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginTop: 8,
+  },
+
+  secondaryButtonText: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  footerContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 8,
+  },
+
+  footerText: {
+    color: COLORS.text,
+    fontSize: 16,
+  },
+
+  linkText: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  verificationContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    padding: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  verificationTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: COLORS.text,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+
+  // ❌ Error Styles
   errorBox: {
     backgroundColor: "#FFE5E5",
     padding: 12,
@@ -102,10 +156,25 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
   },
+
   errorText: {
     color: COLORS.text,
     marginLeft: 8,
     flex: 1,
     fontSize: 14,
+  },
+  
+  fieldErrorText: {
+    color: COLORS.expense,
+    fontSize: 14,
+    marginTop: -10,
+    marginBottom: 10,
+  },
+
+  debug: {
+    fontSize: 10,
+    opacity: 0.5,
+    marginTop: 8,
+    color: COLORS.textLight,
   },
 });
