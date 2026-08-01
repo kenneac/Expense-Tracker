@@ -1,14 +1,8 @@
 import { useState } from "react";
-import {
-  Image,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSignIn } from "@clerk/expo";
 import { type Href, Link, useRouter } from "expo-router";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Ionicons } from "@expo/vector-icons";
 
 import { styles } from "@/assets/styles/auth.styles";
@@ -95,13 +89,13 @@ export default function Page() {
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1 }}
-        enableOnAndroid
-        enableAutomaticScroll
+        bottomOffset={50}
       >
         <View style={styles.verificationContainer}>
           <Image
             source={require("@/assets/images/revenue-i4.png")}
             style={styles.illustration}
+            resizeMode="contain"
           />
 
           <Text style={styles.verificationTitle}>Verify your account</Text>
@@ -120,7 +114,7 @@ export default function Page() {
             style={[styles.verificationInput, error && styles.errorInput]}
             value={code}
             placeholder="Enter your verification code"
-            placeholderTextColor="#9A8478"
+            placeholderTextColor={COLORS.textLight}
             onChangeText={(value) => setCode(value)}
             keyboardType="numeric"
           />
@@ -162,14 +156,13 @@ export default function Page() {
     <KeyboardAwareScrollView
       style={{ flex: 1 }}
       contentContainerStyle={{ flexGrow: 1 }}
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
-      extraScrollHeight={30}
+      bottomOffset={50}
     >
       <View style={styles.container}>
         <Image
           source={require("@/assets/images/revenue-i4.png")}
           style={styles.illustration}
+          resizeMode="contain"
         />
 
         <Text style={styles.title}>Welcome Back</Text>
@@ -189,7 +182,7 @@ export default function Page() {
           autoCapitalize="none"
           value={emailAddress}
           placeholder="Enter email"
-          placeholderTextColor="#9A8478"
+          placeholderTextColor={COLORS.textLight}
           onChangeText={(value) => setEmailAddress(value)}
           keyboardType="email-address"
         />
@@ -204,7 +197,7 @@ export default function Page() {
           style={[styles.input, error && styles.errorInput]}
           value={password}
           placeholder="Enter password"
-          placeholderTextColor="#9A8478"
+          placeholderTextColor={COLORS.textLight}
           secureTextEntry
           onChangeText={(value) => setPassword(value)}
         />

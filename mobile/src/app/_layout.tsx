@@ -2,6 +2,7 @@ import SafeScreen from '@/components/SafeScreen'
 import { ClerkProvider } from '@clerk/expo'
 import { tokenCache } from '@clerk/expo/token-cache'
 import { Slot } from 'expo-router'
+import { KeyboardProvider } from 'react-native-keyboard-controller'
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
 
@@ -12,9 +13,11 @@ if (!publishableKey) {
 export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <SafeScreen>
-        <Slot />
-      </SafeScreen>
+      <KeyboardProvider>
+        <SafeScreen>
+          <Slot />
+        </SafeScreen>
+      </KeyboardProvider>
     </ClerkProvider>
   )
 }
