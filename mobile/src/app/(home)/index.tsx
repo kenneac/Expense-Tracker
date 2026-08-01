@@ -40,7 +40,7 @@ console.log("isLoading: ", isLoading)
         </Pressable>
       </Show>
 
-        <Text>🔒 userId:: {user?.id}</Text>
+        <Text>🔒 userId: {user?.id}</Text>
         <Text>transactions: {JSON.stringify(transactions, null, 2)}</Text>
         <Text>summary: {JSON.stringify(summary, null, 2)}</Text>
         <Text>isLoading: {String(isLoading)}</Text>
