@@ -1,74 +1,121 @@
-import { Show, useUser } from '@clerk/expo'
-import { useClerk } from '@clerk/expo'
-import { Link } from 'expo-router'
-import { Text, View, Pressable, StyleSheet } from 'react-native'
-import { useTransactions } from '@/hooks/useTransactions'
-import { useEffect } from 'react'
+import { useUser } from "@clerk/expo";
+import {
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  FlatList,
+  RefreshControl,
+  Alert,
+  Platform,
+} from "react-native";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { SignOutButton } from "@/components/SignOutButton";
+import { styles } from "@/assets/styles/home.styles";
+import { BalanceCard } from "@/components/BalanceCard";
+import { TransactionItem } from "@/components/TransactionItem";
+import NoTransactionsFound from "@/components/NoTransactionsFound";
+import PageLoader from "@/components/PageLoader";
 
 export default function Page() {
-  const { user } = useUser()
-  const { signOut } = useClerk()
-  const {transactions, summary, isLoading, loadData, deleteTransaction} = useTransactions(user?.id);
+  const { user } = useUser();
+  const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
 
-useEffect(() => {
-  if (user?.id) {
+  const { transactions, summary, isLoading, loadData, deleteTransaction } =
+    useTransactions(user?.id);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
     loadData();
-  }
-}, [loadData, user?.id]);
+  }, [loadData]);
 
-console.log("🔒 userId:", user?.id);
-console.log("transactions: ", transactions),
-console.log("summary: ", summary)
-console.log("isLoading: ", isLoading)
+  const handleDelete = (id: String) => {
+    console.log("Deleting transaction:", id);
+    if (Platform.OS === "web") {
+      if (window.confirm("Are you sure you want to delete this transaction?")) {
+        deleteTransaction(id);
+      }
+      return;
+    }
 
+    Alert.alert(
+      "Delete Transaction",
+      "Are you sure you want to delete this transaction?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => deleteTransaction(id),
+        },
+      ],
+    );
+  };
+
+  if (isLoading && !refreshing) return <PageLoader />;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome!</Text>
-      <Show when="signed-out">
-        <Link href="/(auth)/sign-in">
-          <Text>Sign in</Text>
-        </Link>
-        <Link href="/(auth)/sign-up">
-          <Text>Sign up</Text>
-        </Link>
-      </Show>
-      <Show when="signed-in">
-        <Text>Hello {user?.emailAddresses[0].emailAddress}</Text>
-        <Pressable style={styles.button} onPress={() => signOut()}>
-          <Text style={styles.buttonText}>Sign out</Text>
-        </Pressable>
-      </Show>
+      <View style={styles.content}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          {/* LEFT */}
+          <View style={styles.headerLeft}>
+            <Image
+              source={require("@/assets/images/logo.png")}
+              style={styles.headerLogo}
+              resizeMode="contain"
+            />
+            <View style={styles.welcomeContainer}>
+              <Text style={styles.welcomeText}>Welcome,</Text>
+              <Text style={styles.usernameText}>
+                {user?.emailAddresses[0]?.emailAddress.split("@")[0]}
+              </Text>
+            </View>
+          </View>
+          {/* RIGHT */}
+          <View style={styles.headerRight}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => router.push("/create")}
+            >
+              <Ionicons name="add" size={20} color="#FFF" />
+              <Text style={styles.addButtonText}>Add</Text>
+            </TouchableOpacity>
+            <SignOutButton />
+          </View>
+        </View>
 
-        <Text>🔒 userId: {user?.id}</Text>
-        <Text>transactions: {JSON.stringify(transactions, null, 2)}</Text>
-        <Text>summary: {JSON.stringify(summary, null, 2)}</Text>
-        <Text>isLoading: {String(isLoading)}</Text>
-        
+        <BalanceCard summary={summary} />
+
+        <View style={styles.transactionsHeaderContainer}>
+          <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          <Ionicons name="sync" style={styles.sectionTitle} size={30} onPress={onRefresh} />
+        </View>
+      </View>
+
+      <FlatList
+        style={styles.transactionsList}
+        contentContainerStyle={styles.transactionsListContent}
+        data={transactions}
+        renderItem={({ item }) => (
+          <TransactionItem item={item} onDelete={handleDelete} />
+        )}
+        ListEmptyComponent={<NoTransactionsFound/>}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      />
     </View>
-  )
+  );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    paddingTop: 60,
-    gap: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  button: {
-    backgroundColor: '#0a7ea4',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-})
