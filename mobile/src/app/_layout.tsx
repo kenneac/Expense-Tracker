@@ -1,6 +1,7 @@
 import SafeScreen from '@/components/SafeScreen'
 import { ClerkProvider } from '@clerk/expo'
-import { tokenCache } from '@clerk/expo/token-cache'
+import { tokenCache } from '@/lib/tokenCache'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Slot } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
@@ -13,13 +14,15 @@ if (!publishableKey) {
 
 export default function RootLayout() {
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <KeyboardProvider>
-        <SafeScreen>
-          <Slot />
-        </SafeScreen>
-      </KeyboardProvider>
-      <StatusBar style="auto" />
-    </ClerkProvider>
+    <ErrorBoundary>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+        <KeyboardProvider>
+          <SafeScreen>
+            <Slot />
+          </SafeScreen>
+        </KeyboardProvider>
+        <StatusBar style="auto" />
+      </ClerkProvider>
+    </ErrorBoundary>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSignIn } from "@clerk/expo";
 import { type Href, Link, useRouter } from "expo-router";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -38,7 +38,7 @@ export default function Page() {
           }
 
           const url = decorateUrl("/");
-          if (url.startsWith("http")) {
+          if (Platform.OS === "web" && url.startsWith("http")) {
             window.location.href = url;
           } else {
             router.push(url as Href);
@@ -72,7 +72,7 @@ export default function Page() {
           }
 
           const url = decorateUrl("/");
-          if (url.startsWith("http")) {
+          if (Platform.OS === "web" && url.startsWith("http")) {
             window.location.href = url;
           } else {
             router.push(url as Href);
