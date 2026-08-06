@@ -1,6 +1,6 @@
 import { sql } from "./db.js";
 
-const USER_ID = "user_3HJ7bpdqEN0lB5cMeDfcPBfSEjJ";
+const USER_ID = "user_3HX8nRtWfqMBxISGwd60K1YDnnu";
 
 const transactions = [
   { title: "Salary", amount: 250000, category: "Income" },
