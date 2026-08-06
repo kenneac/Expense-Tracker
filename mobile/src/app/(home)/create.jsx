@@ -4,7 +4,6 @@ import {
   Alert,
   TouchableOpacity,
   TextInput,
-  ActivityIndicatorBase,
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -13,7 +12,7 @@ import { useState } from "react";
 import { API_URL } from "@/constants/api";
 import { styles } from "@/assets/styles/create.styles";
 import { COLORS } from "@/constants/colors";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const CATEGORIES = [
   { id: "food", name: "Food & Drinks", icon: "fast-food" },

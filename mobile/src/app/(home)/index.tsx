@@ -12,7 +12,7 @@ import {
 import { useTransactions } from "@/hooks/useTransactions";
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { SignOutButton } from "@/components/SignOutButton";
 import { styles } from "@/assets/styles/home.styles";
 import { BalanceCard } from "@/components/BalanceCard";
@@ -71,7 +71,7 @@ export default function Page() {
           {/* LEFT */}
           <View style={styles.headerLeft}>
             <Image
-              source={require("@/assets/images/logo.png")}
+              source={require("@/assets/app-icon/app-icon.png")}
               style={styles.headerLogo}
               resizeMode="contain"
             />
