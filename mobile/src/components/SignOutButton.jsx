@@ -1,12 +1,10 @@
-import { useClerk } from "@clerk/clerk-expo";
-import * as Linking from "expo-linking";
-import { Alert, Text, TouchableOpacity } from "react-native";
-import { styles } from "../assets/styles/home.styles";
+import { useClerk } from "@clerk/expo";
+import { Alert, TouchableOpacity } from "react-native";
+import { styles } from "@/assets/styles/home.styles";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS } from "../constants/colors";
+import { COLORS } from "@/constants/colors";
 
 export const SignOutButton = () => {
-  // Use `useClerk()` to access the `signOut()` function
   const { signOut } = useClerk();
 
   const handleSignOut = async () => {
