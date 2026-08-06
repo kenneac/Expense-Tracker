@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Expense Tracker — Backend Architecture Documentation</title>
+<meta name="description" content="Interactive visual documentation of the Expense Tracker backend architecture, request flow, API, middleware and database layer." />
+
+<!-- Mermaid.js (CDN) for diagrams -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f7fb;
+    --bg-soft: #e8edf4;
+    --panel: #ffffff;
+    --panel-2: #eef2f7;
+    --border: #d3dbe6;
+    --text: #0f172a;
+    --text-dim: #475569;
+    --accent: #0369a1;
+    --accent-2: #6366f1;
+    --green: #059669;
+    --yellow: #d97706;
+    --red: #dc2626;
+    --purple: #7c3aed;
+    --sidebar-w: 270px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 20px; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  code, pre { font-family: "Cascadia Code", Consolas, "SF Mono", Menlo, monospace; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--bg-soft);
+    border-right: 1px solid var(--border);
+    overflow-y: auto; z-index: 50;
+    padding: 22px 16px 40px;
+    transition: transform .3s ease;
+  }
+  .sidebar .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 18px; margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar .brand .logo {
+    width: 38px; height: 38px; border-radius: 10px; flex: 0 0 38px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #ffffff;
+  }
+  .sidebar .brand .name { font-weight: 700; font-size: 15px; line-height: 1.2; }
+  .sidebar .brand .sub { font-size: 11px; color: var(--text-dim); }
+  .sidebar nav a {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: 8px; margin: 2px 0;
+    color: var(--text-dim); font-size: 13.5px;
+    transition: all .15s ease;
+  }
+  .sidebar nav a:hover { background: var(--panel); color: var(--text); text-decoration: none; }
+  .sidebar nav a.active { background: linear-gradient(90deg, rgba(56,189,248,.14), rgba(129,140,248,.14)); color: var(--accent); border: 1px solid rgba(56,189,248,.25); }
+  .sidebar nav a .ico { width: 20px; text-align: center; flex: 0 0 20px; }
+  .sidebar .toc-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin: 18px 10px 6px; }
+
+  /* ---------- Main ---------- */
+  .main { margin-left: var(--sidebar-w); padding: 30px 40px 80px; max-width: 1080px; }
+  .mobile-toggle {
+    display: none; position: fixed; top: 12px; left: 12px; z-index: 60;
+    background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 8px 12px; font-size: 18px; cursor: pointer;
+  }
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 45; }
+
+  .hero {
+    padding: 40px 30px; border-radius: 18px; margin-bottom: 30px;
+    background:
+      radial-gradient(900px 300px at 85% -10%, rgba(56,189,248,.22), transparent 60%),
+      radial-gradient(700px 260px at 10% -10%, rgba(129,140,248,.18), transparent 60%),
+      linear-gradient(180deg, var(--panel), var(--bg-soft));
+    border: 1px solid var(--border);
+  }
+  .hero h1 { font-size: 30px; font-weight: 800; margin-bottom: 8px; letter-spacing: -.5px; }
+  .hero h1 .grad { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { color: var(--text-dim); max-width: 720px; margin-bottom: 16px; }
+  .hero .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 600;
+  }
+  .pill img { width: 15px; height: 15px; }
+
+  section { margin-bottom: 44px; scroll-margin-top: 16px; }
+  section h2 {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 22px; font-weight: 800; margin-bottom: 18px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  section h2 .num {
+    flex: 0 0 30px; width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #ffffff; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+  section h3 { font-size: 16px; font-weight: 700; margin: 18px 0 10px; color: var(--accent); }
+  section p { color: var(--text-dim); margin-bottom: 10px; }
+  section p strong, .card strong { color: var(--text); }
+  .lead { color: var(--text); font-size: 15.5px; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 20px; margin: 14px 0;
+  }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 820px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+  .diagram-box {
+    background: #fff; border-radius: 14px; padding: 18px;
+    margin: 14px 0; overflow-x: auto;
+    box-shadow: 0 6px 22px rgba(15, 23, 42, .08);
+  }
+  .diagram-box .mermaid { display: flex; justify-content: center; min-width: 480px; }
+
+  .tree { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; overflow-x: auto; font-size: 13.2px; line-height: 1.7; }
+  .tree .comment { color: #64748b; font-style: italic; }
+  .tree .dir { color: var(--accent); font-weight: 700; }
+  .tree .file { color: #0e7490; }
+  .tree .branch { white-space: pre; }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+  thead th { background: var(--panel-2); color: var(--accent); text-align: left; padding: 9px 12px; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; overflow-wrap: anywhere; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+  tbody tr:hover { background: var(--bg-soft); }
+  .method { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; color: #ffffff; }
+  .m-get { background: var(--green); } .m-post { background: var(--yellow); }
+  .m-del { background: var(--red); } .m-health { background: var(--purple); }
+  .endpoint { font-family: "Cascadia Code", Consolas, monospace; color: #0e7490; font-weight: 600; }
+
+  .collapse { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; background: var(--panel); overflow: hidden; }
+  .collapse .c-head { padding: 14px 18px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 14.5px; user-select: none; }
+  .collapse .c-head .caret { transition: transform .25s ease; color: var(--accent); }
+  .collapse.open .c-head .caret { transform: rotate(90deg); }
+  .collapse .c-body { display: none; padding: 4px 18px 18px; color: var(--text-dim); }
+  .collapse.open .c-body { display: block; }
+
+  .note { border-left: 4px solid var(--yellow); background: rgba(251,191,36,.08); padding: 12px 16px; border-radius: 8px; margin: 12px 0; color: var(--text-dim); }
+  .note.warn { border-left-color: var(--red); background: rgba(248,113,113,.08); }
+  .note.ok { border-left-color: var(--green); background: rgba(52,211,153,.08); }
+  .note strong { color: var(--text); }
+
+  .flow-list { list-style: none; }
+  .flow-list li { position: relative; padding: 8px 0 8px 34px; }
+  .flow-list li::before {
+    content: attr(data-n); position: absolute; left: 0; top: 9px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--accent); font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .flow-list li + li { border-top: 1px dashed var(--border); }
+
+  .chip { display: inline-block; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; margin: 4px; font-size: 13px; }
+  .chip b { color: var(--accent); }
+
+  footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 13px; text-align: center; }
+
+  .back-top { position: fixed; right: 22px; bottom: 22px; z-index: 40; background: var(--panel-2); border: 1px solid var(--border); color: var(--accent); border-radius: 10px; width: 42px; height: 42px; font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center; }
+  .back-top.show { display: flex; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 780px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,.6); }
+    .mobile-toggle { display: block; }
+    .overlay.show { display: block; }
+    .main { margin-left: 0; padding: 60px 18px 60px; }
+    .hero { padding: 26px 20px; }
+    .hero h1 { font-size: 23px; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="mobile-toggle" id="menuBtn">☰</div>
+<div class="overlay" id="overlay"></div>
+<button class="back-top" id="backTop" title="Back to top">↑</button>
+
+<!-- ================= SIDEBAR ================= -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="logo">💰</div>
+    <div>
+      <div class="name">Expense Tracker</div>
+      <div class="sub">Backend · Architecture Docs</div>
+    </div>
+  </div>
+  <nav id="toc"></nav>
+</aside>
+
+<!-- ================= MAIN ================= -->
+<main class="main">
+
+  <div class="hero">
+    <h1>Backend <span class="grad">Architecture</span> Documentation</h1>
+    <p>
+      Interactive, visual reference for the <strong>Expense Tracker</strong> REST API — a compact
+      Express.js server that manages user transactions, serves financial summaries, and keeps data in
+      sync with a serverless Neon (PostgreSQL) database. Diagrams below are generated from the actual
+      implementation in <code>/backend/src</code>.
+    </p>
+    <div class="badges">
+      <span class="pill"><img src="https://cdn.simpleicons.org/nodedotjs/38bdf8" alt="Node"> Node.js</span>
+      <span class="pill"><img src="https://cdn.simpleicons.org/express/ffffff" alt="Express"> Express 5</span>
+      <span class="pill"><img src="https://cdn.simpleicons.org/postgresql/38bdf8" alt="PostgreSQL"> Neon (PostgreSQL)</span>
+      <span class="pill"><img src="https://cdn.simpleicons.org/redis/ff4438" alt="Redis"> Upstash Redis</span>
+      <span class="pill"><img src="https://cdn.simpleicons.org/javascript/f7df1e" alt="JS"> JavaScript (ESM)</span>
+    </div>
+  </div>
+
+  <!-- ============== 1. OVERVIEW ============== -->
+  <section id="overview">
+    <h2><span class="num">1</span> Backend Overview</h2>
+    <p class="lead">
+      The backend is a lightweight RESTful API server that powers the <strong>Expense Tracker</strong>
+      application. Its single responsibility is to <strong>persist and serve user transactions</strong>
+      against a serverless PostgreSQL database (Neon). It runs on <strong>Node.js with Express 5</strong>,
+      uses a <strong>lean, layered folder structure</strong> (config → middleware → routes → controllers),
+      and delegates heavy lifting to cloud services rather than a large local codebase.
+    </p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>🎯 Main Purpose</h3>
+        <ul style="margin-left:18px;color:var(--text-dim);">
+          <li>Store transactions per user (income as positive amounts, expenses as negative).</li>
+          <li>Serve a user's transaction list, newest first.</li>
+          <li>Compute financial summaries: balance, total income, total expenses.</li>
+          <li>Enforce a global API rate limit with Upstash Redis.</li>
+          <li>Expose a health-check endpoint for uptime monitoring.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🏗️ Overall Architecture</h3>
+        <ul style="margin-left:18px;color:var(--text-dim);">
+          <li><strong>Monolith, single-process</strong> Express app (ES modules).</li>
+          <li><strong>Layered:</strong> server → global middleware → routes → controllers → data layer.</li>
+          <li><strong>No service layer</strong> — controllers call the SQL driver directly.</li>
+          <li><strong>Serverless data access</strong> via Neon's HTTP driver.</li>
+          <li><strong>Cron self-ping</strong> keeps the free-hosted instance awake.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Client:</strong> The primary consumer is the React Native / Expo mobile app
+      (<code>/mobile</code>). It authenticates users with <strong>Clerk</strong> on the client side and calls
+      this API with a <code>user_id</code> in the URL/body. The backend itself holds <em>no</em> session state.
+    </div>
+  </section>
+
+
+  <!-- ============== 2. ARCHITECTURE DIAGRAM ============== -->
+  <section id="architecture">
+    <h2><span class="num">2</span> Architecture Diagram</h2>
+    <p>
+      High-level view of the system, showing how the client, the Express server, its internal layers,
+      and the external cloud services (Neon PostgreSQL, Upstash Redis) relate to one another.
+    </p>
+    <div class="diagram-box">
+      <div class="mermaid">
+flowchart TB
+    subgraph CLIENT["📱 Client (React Native / Expo)"]
+        C["Mobile App<br/>Clerk auth (client-side)"]
+    end
+
+    subgraph API["🟢 Express API Server"]
+        S["server.js<br/>App bootstrap"]
+        subgraph MW["Global Middleware"]
+            RL["rateLimiter.js<br/>(Upstash)"]
+            J["express.json()"]
+            CR["cors (origin: *)"]
+        end
+        subgraph RT["Routes"]
+            H["GET /api/health"]
+            TR["/api/transactions<br/>transactions.routes.js"]
+        end
+        subgraph CT["Controllers"]
+            TX["transactions.controller.js"]
+        end
+    end
+
+    subgraph EXT["☁️ External Cloud Services"]
+        NV["Neon PostgreSQL<br/>(transactions table)"]
+        RD["Upstash Redis<br/>rate-limit counters"]
+    end
+
+    C -->|HTTP /api/*| S
+    S --> MW
+    MW --> RT
+    H -->|"200 ok"| C
+    TR --> CT
+    TX -->|neon HTTP driver / SQL| NV
+    NV -->|rows / JSON| TX
+    CT -->|JSON response| C
+    RL -.->|sliding-window limits| RD
+  </div>
+    </div>
+
+    <div class="grid3">
+      <div class="card"><strong>Client</strong><br><span style="color:var(--text-dim)">React Native / Expo app; handles user identity via Clerk; never touches the database.</span></div>
+      <div class="card"><strong>API Server</strong><br><span style="color:var(--text-dim)">Express 5 app: global middleware → routes → controllers → SQL.</span></div>
+      <div class="card"><strong>External Services</strong><br><span style="color:var(--text-dim)">Neon (persistence) and Upstash (distributed rate limiting).</span></div>
+    </div>
+  </section>
+
+  <!-- ============== 3. REQUEST FLOW ============== -->
+  <section id="request-flow">
+    <h2><span class="num">3</span> Request Flow Diagram</h2>
+    <p>
+      How a typical request travels through the backend. This flow is reconstructed directly from
+      <code>server.js</code>, the route definitions, and the controller logic.
+    </p>
+    <div class="diagram-box">
+      <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 📱 Client (Mobile app)
+    participant S as Express Server (server.js)
+    participant M as Global Middleware
+    participant R as Routes (/api/transactions)
+    participant K as Controller
+    participant N as Neon PostgreSQL
+
+    C->>S: HTTP request (GET/POST/DELETE)
+    S->>M: app.use(rateLimiter)
+    M->>M: Upstash sliding-window check (100 req / 60s)
+    alt Rate limit exceeded
+        M-->>C: 429 Too Many Requests
+    else Allowed
+        M->>S: next()
+    end
+    S->>M: app.use(express.json())
+    M->>S: parsed JSON body
+    S->>M: app.use(cors)
+    M->>R: next() → route handler
+    R->>K: controller function (by route)
+    K->>K: validate inputs (create/delete)
+    K->>N: parameterized SQL (neon driver)
+    N-->>K: rows / result
+    K-->>C: JSON response (200 / 201 / 400 / 404 / 500)
+  </div>
+    </div>
+
+    <h3>Step-by-step</h3>
+    <ol class="flow-list">
+      <li data-n="1"><strong>Client request</strong> — The React Native app sends an HTTP request (e.g. <code>GET /api/transactions/:userId</code>) to the Express server.</li>
+      <li data-n="2"><strong>Express server</strong> — <code>server.js</code> receives the request; global middleware runs in registration order.</li>
+      <li data-n="3"><strong>Rate limiter</strong> — <code>rateLimiter.js</code> checks Upstash Redis; if the IP exceeds 100 requests/60s it short-circuits with <code>429</code>.</li>
+      <li data-n="4"><strong>Body parser</strong> — <code>express.json()</code> parses JSON bodies (for POST).</li>
+      <li data-n="5"><strong>CORS</strong> — Allows cross-origin calls (currently <code>*</code>).</li>
+      <li data-n="6"><strong>Route</strong> — The router matches the path and invokes the matching controller.</li>
+      <li data-n="7"><strong>Controller</strong> — Validates input, then runs parameterized SQL via the Neon driver.</li>
+      <li data-n="8"><strong>Database</strong> — Neon executes the query and returns rows.</li>
+      <li data-n="9"><strong>Response</strong> — The controller sends a JSON response back to the client.</li>
+    </ol>
+  </section>
+
+
+  <!-- ============== 4. FOLDER STRUCTURE ============== -->
+  <section id="folder-structure">
+    <h2><span class="num">4</span> Folder Structure</h2>
+    <p>
+      The repository keeps a <strong>minimal layered layout</strong> — one file per responsibility, with
+      configuration, middleware, routes, and controllers under <code>src/</code>.
+    </p>
+    <div class="tree"><div class="branch"><span class="dir">backend/</span>
+│   <span class="comment"># REST API for the expense tracker</span>
+├── <span class="file">.env</span>
+│   <span class="comment"># PORT, DATABASE_URL, Upstash creds, NODE_ENV, API_URL</span>
+├── <span class="file">Readme.md</span>
+├── <span class="file">package.json</span>            <span class="comment"># deps, scripts (ESM)</span>
+├── <span class="file">package-lock.json</span>
+├── <span class="file">documentation/</span>          <span class="comment"># this architecture guide</span>
+└── <span class="dir">src/</span>
+    ├── <span class="file">server.js</span>               <span class="comment"># App entry point, middleware + routes, bootstrap</span>
+    ├── <span class="dir">config/</span>
+    │   ├── <span class="file">db.js</span>              <span class="comment"># Neon connection + initDB() table creation</span>
+    │   ├── <span class="file">cron.js</span>            <span class="comment"># Self-ping cron job (every 14 min)</span>
+    │   ├── <span class="file">upstash.js</span>         <span class="comment"># Upstash rate-limit client (sliding window)</span>
+    │   ├── <span class="file">populateDB.js</span>      <span class="comment"># Seeds sample transactions</span>
+    │   └── <span class="file">resetDB.js</span>          <span class="comment"># Drops & recreates the transactions table</span>
+    ├── <span class="dir">controllers/</span>
+    │   └── <span class="file">transactions.controller.js</span>  <span class="comment"># Request-handling logic</span>
+    ├── <span class="dir">middleware/</span>
+    │   └── <span class="file">rateLimiter.js</span>     <span class="comment"># Global API rate limiting</span>
+    └── <span class="dir">routes/</span>
+        └── <span class="file">transactions.routes.js</span>  <span class="comment"># /api/transactions route definitions</span></div></div>
+
+    <div class="grid3">
+      <div class="card"><strong>config/</strong><br><span style="color:var(--text-dim)">Infrastructure setup: DB connection + table init, Upstash client, cron job, and DB maintenance scripts.</span></div>
+      <div class="card"><strong>middleware/ + routes/</strong><br><span style="color:var(--text-dim)">HTTP layer: global rate limiter middleware and the transaction route definitions.</span></div>
+      <div class="card"><strong>controllers/</strong><br><span style="color:var(--text-dim)">Business logic that turns requests into SQL queries and JSON responses.</span></div>
+    </div>
+  </section>
+
+  <!-- ============== 5. TECHNOLOGIES ============== -->
+  <section id="technologies">
+    <h2><span class="num">5</span> Technologies Used</h2>
+    <p>Detected from <code>package.json</code> and the source. Categories mirror the actual runtime stack.</p>
+
+    <h3>Core Runtime &amp; Framework</h3>
+    <div class="card row" style="gap:22px;">
+      <div style="text-align:center;min-width:110px;"><img src="https://cdn.simpleicons.org/nodedotjs/38bdf8" alt="Node.js" height="34"><div style="font-size:12.5px;color:var(--text-dim)">Node.js</div></div>
+      <div style="text-align:center;min-width:110px;"><img src="https://cdn.simpleicons.org/express/ffffff" alt="Express" height="34"><div style="font-size:12.5px;color:var(--text-dim)">Express 5</div></div>
+      <div style="text-align:center;min-width:110px;"><img src="https://cdn.simpleicons.org/javascript/f7df1e" alt="JavaScript" height="34"><div style="font-size:12.5px;color:var(--text-dim)">JavaScript (ESM)</div></div>
+      <div style="text-align:center;min-width:110px;"><img src="https://cdn.simpleicons.org/npm/cb3837" alt="npm" height="34"><div style="font-size:12.5px;color:var(--text-dim)">npm</div></div>
+      <div style="text-align:center;min-width:110px;"><img src="https://cdn.simpleicons.org/nodemon/76d04b" alt="nodemon" height="34"><div style="font-size:12.5px;color:var(--text-dim)">nodemon (dev)</div></div>
+    </div>
+
+    <h3>Data &amp; Cloud Services</h3>
+    <div class="card row" style="gap:22px;">
+      <div style="text-align:center;min-width:110px;"><img src="https://cdn.simpleicons.org/postgresql/38bdf8" alt="PostgreSQL" height="34"><div style="font-size:12.5px;color:var(--text-dim)">Neon (PostgreSQL)</div></div>
+      <div style="text-align:center;min-width:110px;"><img src="https://cdn.simpleicons.org/redis/ff4438" alt="Redis" height="34"><div style="font-size:12.5px;color:var(--text-dim)">Upstash Redis</div></div>
+    </div>
+
+    <h3>Middleware &amp; Utilities</h3>
+    <div class="card">
+      <span class="chip"><b>express.json()</b> — JSON body parser</span>
+      <span class="chip"><b>cors</b> — cross-origin (origin: *)</span>
+      <span class="chip"><b>@upstash/ratelimit</b> — sliding-window limiter</span>
+      <span class="chip"><b>node-cron</b> — self-ping schedule</span>
+      <span class="chip"><b>dotenv</b> — environment variables</span>
+      <span class="chip"><b>@neondatabase/serverless</b> — serverless SQL driver</span>
+    </div>
+
+    <div class="note ok">
+      <strong>Not used in this backend:</strong> JWT, bcrypt, Multer, Cloudinary, Socket.IO, Prisma, Mongoose,
+      or a Redis cache read-path. Authentication (Clerk) is handled exclusively by the <strong>mobile
+      client</strong>; the API receives an already-identified <code>user_id</code>.
+    </div>
+  </section>
+
+
+  <!-- ============== 6. API ARCHITECTURE ============== -->
+  <section id="api-architecture">
+    <h2><span class="num">6</span> API Architecture</h2>
+    <p>
+      The API is organized around a single resource — <strong>transactions</strong> — mounted under
+      <code>/api/transactions</code>, plus one health-check endpoint. There is no auth layer; identity is
+      passed in as <code>user_id</code>.
+    </p>
+
+    <div class="diagram-box">
+      <div class="mermaid">
+flowchart LR
+    A["🗺️ server.js<br/>app.use('/api/transactions')"]
+    A --> R["transactions.routes.js<br/>express.Router()"]
+    R --> R1["GET /:userId"]
+    R --> R2["POST /"]
+    R --> R3["DELETE /:id"]
+    R --> R4["GET /summary/:userId"]
+    R1 --> C1["getTransactionsByUserId"]
+    R2 --> C2["createTransaction"]
+    R3 --> C3["deleteTransaction"]
+    R4 --> C4["getSummaryByUserId"]
+  </div>
+    </div>
+
+    <h3>Endpoints</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Controller</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method m-get">GET</span></td><td class="endpoint">/api/health</td><td>— (inline in server.js)</td><td>Health check, returns <code>{"status":"ok"}</code>.</td></tr>
+        <tr><td><span class="method m-get">GET</span></td><td class="endpoint">/api/transactions/:userId</td><td>getTransactionsByUserId</td><td>All transactions for a user, newest first.</td></tr>
+        <tr><td><span class="method m-post">POST</span></td><td class="endpoint">/api/transactions/</td><td>createTransaction</td><td>Create a transaction (validates required fields). Returns <code>201</code>.</td></tr>
+        <tr><td><span class="method m-del">DELETE</span></td><td class="endpoint">/api/transactions/:id</td><td>deleteTransaction</td><td>Delete a transaction by DB id. Validates the id; <code>404</code> if absent.</td></tr>
+        <tr><td><span class="method m-get">GET</span></td><td class="endpoint">/api/transactions/summary/:userId</td><td>getSummaryByUserId</td><td>Returns balance, income, and expenses for a user.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <strong>Route ordering note:</strong> <code>GET /summary/:userId</code> is defined <em>after</em>
+      <code>GET /:userId</code> in the router. In Express 5, <code>/summary/:userId</code> is matched using the
+      literal <code>summary</code> segment, so it is reached correctly before the generic <code>:userId</code>
+      pattern conflicts — no functional issue at runtime.
+    </div>
+
+    <h3>Payloads</h3>
+    <div class="grid2">
+      <div class="card">
+        <h3>POST /api/transactions/ body</h3>
+<pre style="background:#f8fafc;border:1px solid #e2e8f0;color:#0f172a;padding:12px;border-radius:8px;font-size:12.5px;"><code>{
+  "user_id": "user_3HX8nRtWfqMBxISGwd60K1YDnnu",
+  "title": "Groceries",
+  "amount": -15000,      // + income / - expense
+  "category": "Food"
+}</code></pre>
+      </div>
+      <div class="card">
+        <h3>GET /api/transactions/summary/:userId response</h3>
+<pre style="background:#f8fafc;border:1px solid #e2e8f0;color:#0f172a;padding:12px;border-radius:8px;font-size:12.5px;"><code>{
+  "balance": 42500,
+  "income": 430000,
+  "expenses": -387500
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============== 7. AUTHENTICATION FLOW ============== -->
+  <section id="authentication">
+    <h2><span class="num">7</span> Authentication Flow</h2>
+    <div class="note warn">
+      <strong>The backend does not implement authentication.</strong> There is no JWT, session, or auth
+      middleware. Identity is established by the <strong>React Native client via Clerk</strong> and passed to
+      the API as a <code>user_id</code>. The diagram below reflects the real current model — not an invented
+      auth flow.
+    </div>
+    <p>
+      The mobile app handles sign-in/sign-up with <strong>Clerk</strong> (email/password, sessions cached in
+      <code>expo-secure-store</code>). Once authenticated, the app knows the user's id and includes it when
+      calling this API. The backend trusts that value as-is.
+    </p>
+    <div class="diagram-box">
+      <div class="mermaid">
+flowchart LR
+    subgraph Mobile["📱 Mobile app (React Native)"]
+        A["User signs in / up<br/>with Clerk"]
+        B["Clerk session stored<br/>(expo-secure-store)"]
+        C["App resolves<br/>user.id"]
+    end
+    subgraph Backend["🟢 Backend API"]
+        D["HTTP call with:<br/>user_id in URL/body"]
+        E["No auth middleware —<br/>request accepted"]
+    end
+    A -->|credentials| CP["👤 Clerk<br/>(external)"]
+    CP -->|token + session| B
+    B --> C
+    C --> D
+    D --> E
+  </div>
+    </div>
+    <div class="card">
+      <h3>Implications &amp; authorization model</h3>
+      <ul style="margin-left:18px;color:var(--text-dim);">
+        <li><strong>Authorization is "by user_id":</strong> each query scopes data with <code>WHERE user_id = ...</code>.</li>
+        <li>There is <strong>no server-side verification</strong> that the caller owns that <code>user_id</code> today.</li>
+        <li>If tighter security is required later, an auth middleware (e.g. verifying a Clerk JWT) could be inserted between Middleware and Routes in the pipeline.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============== 8. DATABASE LAYER ============== -->
+  <section id="database">
+    <h2><span class="num">8</span> Database Layer</h2>
+    <p>
+      Persistence uses <strong>Neon (PostgreSQL)</strong> through the serverless <code>@neondatabase/serverless</code>
+      driver. <code>db.js</code> exports a single parameterized <code>sql</code> tagged-template client and an
+      <code>initDB()</code> that creates the table if it doesn't exist. All queries are parameterized to prevent
+      SQL injection.
+    </p>
+
+    <h3>Table: transactions</h3>
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="endpoint">id</td><td>SERIAL</td><td>PRIMARY KEY</td><td>Auto-incrementing transaction id.</td></tr>
+        <tr><td class="endpoint">user_id</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Owning user (from Clerk on the client).</td></tr>
+        <tr><td class="endpoint">title</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Transaction label.</td></tr>
+        <tr><td class="endpoint">amount</td><td>DECIMAL(10,2)</td><td>NOT NULL</td><td>Positive = income; negative = expense.</td></tr>
+        <tr><td class="endpoint">category</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>e.g. Food, Income, Utilities.</td></tr>
+        <tr><td class="endpoint">created_at</td><td>DATE</td><td>NOT NULL DEFAULT CURRENT_DATE</td><td>Auto-set to today.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="diagram-box">
+      <div class="mermaid">
+erDiagram
+    TRANSACTIONS {
+        serial id PK
+        varchar(255) user_id
+        varchar(255) title
+        decimal amount
+        varchar(255) category
+        date created_at
+    }
+    USER ||--o{ TRANSACTIONS : "owns (via user_id)"
+  </div>
+    </div>
+
+    <h3>Database scripts</h3>
+    <div class="grid3">
+      <div class="card"><strong>initDB()</strong><br><span style="color:var(--text-dim)">Runs on server start; <code>CREATE TABLE IF NOT EXISTS transactions</code>.</span></div>
+      <div class="card"><strong>npm run populate-db</strong><br><span style="color:var(--text-dim)">Seeds 30 sample transactions for a demo user.</span></div>
+      <div class="card"><strong>npm run reset-db</strong><br><span style="color:var(--text-dim)">Drops the table and recreates it (empty).</span></div>
+    </div>
+
+    <h3>Controller ↔ SQL mapping (data flow)</h3>
+    <div class="diagram-box">
+      <div class="mermaid">
+flowchart TB
+    CT["transactions.controller.js"]
+    CT -->|getTransactionsByUserId| Q1["SELECT *<br/>WHERE user_id = ?<br/>ORDER BY created_at DESC"]
+    CT -->|createTransaction| Q2["INSERT ...<br/>RETURNING *"]
+    CT -->|deleteTransaction| Q3["DELETE ... WHERE id = ?<br/>RETURNING *"]
+    CT -->|getSummaryByUserId| Q4["SUM(amount) balance<br/>SUM(amount>0) income<br/>SUM(amount&lt;0) expenses"]
+    Q1 --> N[(Neon PostgreSQL)]
+    Q2 --> N
+    Q3 --> N
+    Q4 --> N
+  </div>
+    </div>
+  </section>
+
+
+  <!-- ============== 9. MIDDLEWARE PIPELINE ============== -->
+  <section id="middleware">
+    <h2><span class="num">9</span> Middleware Pipeline</h2>
+    <p>
+      Global middleware is registered in <code>server.js</code> in the exact order below. Each step runs in
+      sequence for every request; the controller/route handlers follow, and error handling is done locally
+      in each controller's try/catch (there is no dedicated error-handling middleware).
+    </p>
+    <div class="diagram-box">
+      <div class="mermaid">
+flowchart TB
+    IN["📥 Request"] --> A["rateLimiter.js<br/>(Upstash Redis · 100/60s)"]
+    A -->|429 if exceeded| OUT429["❌ 429 Too Many Requests"]
+    A -->|next| B["express.json()<br/>body parser"]
+    B --> C["cors()<br/>origin: *"]
+    C --> D["Routes"]
+    D --> E["Controller"]
+    E --> F["Neon PostgreSQL"]
+    F --> G["📤 JSON Response"]
+    E -->|400 / 404 / 500| G
+  </div>
+    </div>
+
+    <h3>Interactive walkthrough</h3>
+    <div class="collapse open">
+      <div class="c-head">1 · rateLimiter.js <span class="caret">▶</span></div>
+      <div class="c-body">Reads <code>req.ip</code>, calls <code>ratelimit.limit(ip)</code> against Upstash Redis (sliding window, 100 requests / 60 s). On failure returns <code>429</code>; otherwise <code>next()</code>. Config: <code>config/upstash.js</code>.</div>
+    </div>
+    <div class="collapse">
+      <div class="c-head">2 · express.json() <span class="caret">▶</span></div>
+      <div class="c-body">Parses incoming JSON request bodies into <code>req.body</code> (used by <code>createTransaction</code>).</div>
+    </div>
+    <div class="collapse">
+      <div class="c-head">3 · cors() <span class="caret">▶</span></div>
+      <div class="c-body">Enables cross-origin requests; configured with <code>origin: '*'</code> (any origin).</div>
+    </div>
+    <div class="collapse">
+      <div class="c-head">4 · Routes &amp; Controllers <span class="caret">▶</span></div>
+      <div class="c-body">The router matches the path and dispatches to the matching controller function (see section 6).</div>
+    </div>
+    <div class="collapse">
+      <div class="c-head">5 · Error handling (per-controller) <span class="caret">▶</span></div>
+      <div class="c-body">Each controller wraps logic in try/catch. Failures log the error and return <code>500 {"message":"Internal server error"}</code>. There is no global error-handling middleware.</div>
+    </div>
+  </section>
+
+  <!-- ============== 10. EXTERNAL SERVICES ============== -->
+  <section id="external">
+    <h2><span class="num">10</span> External Services</h2>
+    <p>
+      The backend relies on two external cloud services and one scheduled self-maintenance mechanism.
+      These are the only out-of-process integrations detected in the codebase.
+    </p>
+    <div class="diagram-box">
+      <div class="mermaid">
+flowchart LR
+    subgraph BE["🟢 Backend"]
+        DB["config/db.js"]
+        RL["config/upstash.js + rateLimiter.js"]
+        CR["config/cron.js<br/>(node-cron)"]
+    end
+    DB -->|DATABASE_URL · parameterized SQL| NV["🗄️ Neon PostgreSQL<br/>transactions table"]
+    RL -->|sliding-window limit check| RD["🧱 Upstash Redis<br/>counters per IP"]
+    CR -->|GET every 14 min| PU["🌐 API_URL (self-ping)<br/>keeps instance awake"]
+    NV -->|rows| DB
+    RD -->|success / limited| RL
+  </div>
+    </div>
+
+    <div class="grid3">
+      <div class="card">
+        <h3>🗄️ Neon (PostgreSQL)</h3>
+        <span style="color:var(--text-dim)">Primary data store. Accessed only through the serverless <code>neon()</code> HTTP driver with parameterized queries.</span>
+      </div>
+      <div class="card">
+        <h3>🧱 Upstash Redis + Ratelimit</h3>
+        <span style="color:var(--text-dim)">Distributed rate limiting keyed by client IP. No application data is cached in Redis.</span>
+      </div>
+      <div class="card">
+        <h3>🌐 Cron self-ping</h3>
+        <span style="color:var(--text-dim)"><code>node-cron</code> fires every 14 minutes (in production only) and GETs <code>API_URL</code> to prevent the free host from sleeping.</span>
+      </div>
+    </div>
+
+    <div class="note ok">
+      <strong>Not present:</strong> Cloudinary, Firebase, Stripe, email providers, OAuth, or other third-party
+      REST APIs. The only outbound HTTP caller is the cron self-ping.
+    </div>
+  </section>
+
+  <footer>
+    Expense Tracker · Backend Architecture Documentation · Generated from <code>/backend/src</code> ·
+    Node.js + Express 5 · Neon PostgreSQL · Upstash Redis
+  </footer>
+
+</main>
+
+
+<script>
+  // ---------------- Sidebar Table of Contents ----------------
+  const sections = Array.from(document.querySelectorAll("main section[id]"));
+  const toc = document.getElementById("toc");
+  const labels = {
+    overview: ["🏠", "Backend Overview"],
+    architecture: ["🧭", "Architecture Diagram"],
+    "request-flow": ["🔁", "Request Flow"],
+    "folder-structure": ["📂", "Folder Structure"],
+    technologies: ["🧰", "Technologies"],
+    "api-architecture": ["🗺️", "API Architecture"],
+    authentication: ["🔐", "Authentication Flow"],
+    database: ["🗄️", "Database Layer"],
+    middleware: ["⚙️", "Middleware Pipeline"],
+    external: ["🌐", "External Services"]
+  };
+  sections.forEach((sec) => {
+    const [ico, name] = labels[sec.id] || ["📄", sec.id];
+    const a = document.createElement("a");
+    a.href = "#" + sec.id;
+    a.innerHTML = '<span class="ico">' + ico + "</span>" + name;
+    a.dataset.target = sec.id;
+    toc.appendChild(a);
+  });
+
+  // ---------------- Scrollspy (active link) ----------------
+  const navLinks = Array.from(document.querySelectorAll('#toc a[data-target]'));
+  const spy = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        navLinks.forEach((l) => l.classList.remove("active"));
+        const link = navLinks.find((l) => l.dataset.target === e.target.id);
+        if (link) link.classList.add("active");
+      }
+    });
+  }, { rootMargin: "-20% 0px -70% 0px" });
+  sections.forEach((s) => spy.observe(s));
+
+  // ---------------- Collapsible sections ----------------
+  document.querySelectorAll(".collapse .c-head").forEach((h) => {
+    h.addEventListener("click", () => h.parentElement.classList.toggle("open"));
+  });
+
+  // ---------------- Mobile sidebar toggle ----------------
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("overlay");
+  const menuBtn = document.getElementById("menuBtn");
+  const closeSidebar = () => { sidebar.classList.remove("open"); overlay.classList.remove("show"); };
+  menuBtn.addEventListener("click", () => { sidebar.classList.toggle("open"); overlay.classList.toggle("show"); });
+  overlay.addEventListener("click", closeSidebar);
+  toc.addEventListener("click", (e) => {
+    if (e.target.closest("a")) closeSidebar();
+  });
+
+  // ---------------- Back to top ----------------
+  const backTop = document.getElementById("backTop");
+  window.addEventListener("scroll", () => {
+    backTop.classList.toggle("show", window.scrollY > 400);
+  });
+  backTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+  // ---------------- Mermaid ----------------
+  if (window.mermaid) {
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#e0f2fe",
+        primaryTextColor: "#0f172a",
+        primaryBorderColor: "#0ea5e9",
+        lineColor: "#64748b",
+        secondaryColor: "#eef2ff",
+        tertiaryColor: "#f0f9ff",
+        clusterBkg: "#f8fafc",
+        clusterBorder: "#cbd5e1",
+        edgeLabelBackground: "#ffffff",
+        nodeTextColor: "#0f172a",
+        fontFamily: "Segoe UI, system-ui, sans-serif",
+        fontSize: "14px"
+      },
+      securityLevel: "loose"
+    });
+  } else {
+    document.querySelectorAll(".mermaid").forEach((el) => {
+      el.outerHTML = '<p style="color:#64748b;padding:10px;">Diagrams require an internet connection to load the Mermaid library (CDN).</p>';
+    });
+  }
+</script>
+</body>
+</html>
+
