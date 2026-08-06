@@ -9,9 +9,11 @@
     "scheme": "expense-tracker",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/app-icon/app-icon.png"
+      "icon": "./assets/app-icon/app-icon.png",
+      "bundleIdentifier": "com.kenneacsteam.expensetracker"
     },
     "android": {
+      "package": "com.kenneacsteam.expensetracker",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/app-icon/app-icon.png"
@@ -28,6 +30,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5a04ea59-d86a-47e4-ad11-a0109055c226"
+      }
+    },
+    "owner": "kenneacs-team"
   }
 }
